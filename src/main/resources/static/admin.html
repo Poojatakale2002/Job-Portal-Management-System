@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+
+<style>
+body{
+    margin:0;
+    font-family:'Segoe UI';
+    background:#020617;
+    color:white;
+}
+
+#nav{
+    margin-bottom:10px;
+}
+
+.container{
+    padding:20px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1fr 2fr;
+    gap:20px;
+}
+
+.card{
+    background:#1e293b;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 5px 15px rgba(0,0,0,.4);
+}
+
+input,textarea{
+    width:100%;
+    padding:10px;
+    margin:8px 0;
+    border:none;
+    border-radius:6px;
+    box-sizing:border-box;
+}
+
+textarea{
+    height:120px;
+    resize:vertical;
+}
+
+button{
+    padding:10px 15px;
+    background:#38bdf8;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#0ea5e9;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,td{
+    padding:10px;
+    text-align:left;
+}
+
+th{
+    background:#0f172a;
+}
+
+tr:nth-child(even){
+    background:#334155;
+}
+
+.app-box{
+    margin-top:20px;
+}
+</style>
+
+</head>
+<body>
+
+<div id="nav"></div>
+
+<script>
+fetch("navbar.html")
+.then(r=>r.text())
+.then(html=>{
+    document.getElementById("nav").innerHTML=html;
+});
+</script>
+
+<div class="container">
+
+<h2>Admin Dashboard ⚙️</h2>
+
+<div class="grid">
+
+<div class="card">
+
+<h3>Add Job</h3>
+
+<input type="text" id="title" placeholder="Job Title">
+<input type="text" id="company" placeholder="Company">
+<input type="text" id="location" placeholder="Location">
+<input type="text" id="salary" placeholder="Salary">
+<input type="text" id="imageUrl" placeholder="Image URL">
+<textarea id="desc" placeholder="Description"></textarea>
+
+<button onclick="addJob()">Add Job</button>
+
+</div>
+
+<div class="card">
+
+<h3>Job List</h3>
+
+<table>
+<thead>
+<tr>
+<th>Title</th>
+<th>Company</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="jobTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="card app-box">
+
+<h3>Applications</h3>
+
+<div id="apps"></div>
+
+</div>
+
+</div>
+
+<script>
+
+function addJob(){
+
+    const job={
+
+        title:document.getElementById("title").value,
+        company:document.getElementById("company").value,
+        location:document.getElementById("location").value,
+        salary:document.getElementById("salary").value,
+        imageUrl:document.getElementById("imageUrl").value,
+        description:document.getElementById("desc").value
+
+    };
+
+    console.log(job);
+
+    fetch("/jobs",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify(job)
+
+    })
+    .then(r=>r.text())
+    .then(msg=>{
+
+        alert(msg);
+
+        document.getElementById("title").value="";
+        document.getElementById("company").value="";
+        document.getElementById("location").value="";
+        document.getElementById("salary").value="";
+        document.getElementById("imageUrl").value="";
+        document.getElementById("desc").value="";
+
+        loadJobs();
+
+    });
+
+}
+
+function loadJobs(){
+
+    fetch("/jobs")
+    .then(r=>r.json())
+    .then(data=>{
+
+        let h="";
+
+        data.content.forEach(j=>{
+
+            h+=`
+            <tr>
+                <td>${j.title}</td>
+                <td>${j.company}</td>
+                <td>
+                    <button onclick="del(${j.id})">Delete</button>
+                </td>
+            </tr>`;
+
+        });
+
+        document.getElementById("jobTable").innerHTML=h;
+
+    });
+
+}
+
+function del(id){
+
+    if(confirm("Delete this job?")){
+
+        fetch("/jobs/"+id,{
+            method:"DELETE"
+        })
+        .then(r=>r.text())
+        .then(msg=>{
+            alert(msg);
+            loadJobs();
+        });
+
+    }
+
+}
+
+function loadApplications(){
+
+    fetch("/applications/details")
+    .then(r=>r.json())
+    .then(data=>{
+
+        let h=`
+        <table>
+        <tr>
+        <th>User Name</th>
+        <th>Job Title</th>
+        </tr>`;
+
+        data.forEach(a=>{
+
+            h+=`
+            <tr>
+            <td>${a.userName}</td>
+            <td>${a.jobTitle}</td>
+            </tr>`;
+
+        });
+
+        h+="</table>";
+
+        document.getElementById("apps").innerHTML=h;
+
+    });
+
+}
+
+window.onload=function(){
+
+    loadJobs();
+    loadApplications();
+
+}
+
+</script>
+
+</body>
+</html>
